@@ -13,8 +13,9 @@ public class MqttFeederProperties {
     private int port = 1883;
     private int qos = 1;
 
+    private String baseUrl;
     private String origin = "CAdmin";
-    private String cseId = "Mobius";
+    private String cseId = "Mobius2";
     private String ae;
     private String region;
 

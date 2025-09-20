@@ -1,7 +1,7 @@
 package com.mobius.dt.application.service;
 
 import com.mobius.dt.config.MqttFeederProperties;
-import com.mobius.dt.infrastructure.onem2m.Onem2mMqttPublisher;
+import com.mobius.dt.infrastructure.onem2m.Onem2mHttpPublisher;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -28,7 +28,7 @@ public class CsvMqttFeederService {
     // MQTT 피더 동작 관련 설정 값 주입 (CSV 경로, 발행 주기, 루프 여부 등)
     private final MqttFeederProperties props;
     // oneM2M 규격으로 센서 데이터(CIN)를 발행하는 퍼블리셔
-    private final Onem2mMqttPublisher publisher;
+    private final Onem2mHttpPublisher publisher;
 
     @Value
     static class Row {
