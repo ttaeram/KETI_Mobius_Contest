@@ -189,4 +189,129 @@ Mobius 서버 실행.
 % npm start
 ```
 
-browser 창에서 [http://localhost:7575](http://localhost:7575) 주소로 접속
+browser 창에서 [http://localhost:7575](http://localhost:7575) 주소로 접속.
+
+## 02. Python 실행 환경 구성 및 실습 코드 준비
+### 2-1. Anaconda 설치
+
+[Anaconda 다운로드 페이지](https://www.anaconda.com/download/success)로 이동하여 Anaconda 다운로드 후 설치. 설치 시 기본 옵션을 사용하여 설치.
+
+### 2-2. 실습 코드 repository 클론
+Anaconda 설치 이후 실습 코드 클론.(본 repository 클론)
+```
+% git clone https://github.com/ttaeram/KETI_Mobius_Contest.git
+% cd KETI_Mobius_Contest
+```
+
+해당 디렉토리에서 가상환경을 생성 후 활성화.
+```
+% conda create -n mobius_env python=3.10 -y
+% conda activate mobius_env
+```
+
+> 가상환경 비활성화를 원할 경우, 아래 명령 입력
+> ```
+> % conda deactivate mobius_env
+> ```
+
+활성화된 가상환경에 `requirements.txt` 기반으로 실습용 패키지 설치
+```
+% pip install -r requirements.txt
+```
+
+## 03. 실습 진행
+### 3-1. Application Entity(AE) 생성 실습
+**실습은 전부 [01. Installation Guide](#01-installation-guide)애서 진행한 `MySQL`, `mosquitto`, `Mobius Server`, `Mobius Resource Browser`가 실행되어 있다는 가정 하에 진행**
+
+KETI_Mobius_Contest 디렉토리에서 가상환경 활성화 후 진행. 아래 명령을 실행하여 AE 생성.
+```
+% python T1_create_remove_Mobius_AE.py create --rn Meta-Sejong --api app.fire.detection
+```
+
+생성한 AE를 조회하거나 삭제하고 싶은 경우는 아래 명령을 실행.
+```
+% python T1_create_remove_Mobius_AE.py get --rn Meta-Sejong
+% python T1_create_remove_Mobius_AE.py delete --rn Meta-Sejong
+```
+
+### 3-2. 센서 데이터 피더 실행
+센서 데이터 피더는 Java Spring으로 구성.
+```
+% cd fd
+```
+
+빌드 또는 실행 이전에 환경 변수들을 설정해 줄 `.env` 파일이 필요. 따라서 Spring 프로젝트 루트 디렉토리(`fd/`)에 `.env` 파일 생성 후 아래 내용 작성
+```
+; Mobius 접속 정보
+MOBIUS_BASE_URL=http://본인의_mobius_서버_ip_주소:7579/Mobius
+MOBIUS_ORIGIN=CAdmin
+
+FD_AE_NAME=Meta-Sejong
+
+; CSV 피더 설정
+FEEDER_MQTT_ENABLED=true
+FEEDER_MQTT_BASE_URL=http://본인의_mobius_서버_ip_주소:7579/Mobius
+FEEDER_MQTT_BROKER=127.0.0.1
+FEEDER_MQTT_PORT=1883
+FEEDER_MQTT_QOS=1
+
+FEEDER_MQTT_ORIGIN=CAdmin
+FEEDER_MQTT_CSE_ID=Mobius2
+FEEDER_MQTT_AE=Meta-Sejong
+FEEDER_MQTT_REGION=Chungmu-hall
+
+FEEDER_MQTT_S1=./data/sensor/sensor1.csv
+FEEDER_MQTT_S2=./data/sensor/sensor2.csv
+FEEDER_MQTT_S3=./data/sensor/sensor3.csv
+
+FEEDER_MQTT_RATE_MS=1000
+FEEDER_MQTT_LOOP=true
+
+```
+
+**`MOBIUS_BASE_URL` 및 `FEEDER_MQTT_BASE_URL`의 IP 주소는 본인이 Mobius 실행 시 출력된 주소를 입력.**
+
+`.env` 파일 생성 후 실행.
+```
+% ./gradlew bootRun
+```
+
+또는 빌드 후 실행.
+```
+% ./gradlew build
+% java -jar build/libs/fd-0.0.1-SNAPSHOT.jar
+```
+
+실행 후 Mobius Resource Browser 확인 시 아래와 같은 리소스 트리 확인 가능.
+
+![Mobius Resource Tree](./assets/readme/mobius_resource_tree.png)
+
+### 3-3. 이상 데이터 감지 실습
+Spring 프로젝트 실행 이후 진행 가능. 아래 명령 실행
+```
+% python T2_anomaly_detection.py \
+  --broker 127.0.0.1 --port 1883 \
+  --cse-id CAdmin --origin-mqtt Mobius2 \
+  --base-url "http://본인의_mobius_서버_ip_주소:7579/Mobius" \
+  --origin CAdmin \
+  --ae Meta-Sejong --robot Robot1 --ctrl Ctrl \
+  --stringify-con \
+  --label-cache-sec 30 \
+  --cooldown-sec 600
+```
+
+### 3-4. 로봇 제어 실습
+Spring 프로젝트 실행 이후 진행 가능. 아래 명령 실행
+```
+% python T3_robot_control.py \
+  --broker 127.0.0.1 --port 1883 \
+  --cse-id Mobius2 --origin-mqtt 본인_mqtt_origin_id \
+  --base-url "http://본인의_mobius_서버_ip_주소:7579/Mobius" \
+  --origin CAdmin \
+  --ae Meta-Sejong --robot Robot1 --ctrl Ctrl --cam1 Cam1 --cam2 Cam2 \
+  --media-root static/robot \
+  --media-base-url http://HOST/static/robot \
+  --frames 15
+```
+
+> 본인의 mqtt originator ID가 무엇인지 모르겠다면 Mobius Resource Browser에서 확인 가능. `mobiususer.MOBIUS.BROWSER.WEB_sub`이라고 생성되어 있는 `sub`을 눌러 확인. `m2m:sub` 내에 `cr` 항목이 이에 해당. (예: `SZlK9SDKWNx`)

@@ -224,6 +224,18 @@ def parse_notification(payload: str) -> Tuple[Optional[Dict[str, Any]], Optional
                 try: con = json.loads(con)
                 except Exception: con = {"_raw": con}
             return cin, con, sur
+    
+    if isinstance(obj, dict) and obj.get("op") == 1 and isinstance(obj.get("pc"), dict):
+        pc = obj["pc"]
+        cin = pc.get("m2m:cin") if isinstance(pc.get("m2m:cin"), dict) else None
+        if cin:
+            con = cin.get("con")
+            if isinstance(con, str):
+                try: con = json.loads(con)
+                except Exception: con = {"_raw": con}
+            # sur 대신 to 경로를 넘겨서 추후 센서번호 추출에 사용
+            to_path = obj.get("to")
+            return cin, con, to_path
 
     # C) direct CIN
     if isinstance(obj, dict) and "m2m:cin" in obj:
@@ -245,19 +257,26 @@ def extract_fields(con: Any) -> Optional[Tuple[float, int, str]]:
     if not isinstance(con, dict):
         return None
 
-
-    def find_key(d: Dict[str, Any], *cands: str):
+    # 키 탐색: temp/temperature, temperature[c], temp_c 등 변형까지 허용
+    def find_key(d: Dict[str, Any], *cands: str) -> Optional[str]:
         for k in d.keys():
-            if k.lower() in cands: return k
+            kl = k.lower()
+            for c in cands:
+                cl = c.lower()
+                if kl == cl or kl.startswith(cl) or cl in kl:
+                    return k
         return None
 
     k_temp = find_key(con, "temp", "temperature")
-    k_fire = find_key(con, "fire_alarm")
+    k_fire = find_key(con, "fire_alarm", "firealarm")
     k_ts   = find_key(con, "ts", "time", "timestamp", "datetime")
-    if not k_temp: return None
+    if not k_temp:
+        return None
 
-    try: temp = float(con[k_temp])
-    except Exception: return None
+    try:
+        temp = float(con[k_temp])
+    except Exception:
+        return None
 
     try:
         fire = int(con[k_fire]) if k_fire is not None else 0
@@ -354,7 +373,11 @@ def main():
     if args.topics.strip():
         topics = [t.strip() for t in args.topics.split(",") if t.strip()]
     elif args.cse_id and args.origin_mqtt:
-        topics = [f"/oneM2M/req/{args.cse_id}/{args.origin_mqtt}/json"]
+        # 표준/역순 둘 다 구독해 브로커 구성 차이를 흡수
+        topics = [
+            f"/oneM2M/req/{args.cse_id}/{args.origin_mqtt}/json",
+            f"/oneM2M/req/{args.origin_mqtt}/{args.cse_id}/json",
+        ]
     else:
         print("[ERR] Provide --topics or (--cse-id AND --origin-mqtt).", file=sys.stderr)
         sys.exit(1)

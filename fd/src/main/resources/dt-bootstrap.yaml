@@ -10,17 +10,17 @@ tree:
       - rn: Sensor1
         lbl: ["type=sensor","region=Chungmu","sid=C-S1","x=10.0","y=10.0","z=0.0","adjx=10.0","adjy=10.5","adjz=0.0"]
         subs: [{ rn: C-S1-sub, enc: { net: [3] }, nct: 2,
-          nu: ["mqtt://203.250.148.120/Meta_Sejong_Chungmu_hall_Sensor1_data?ct=json"] }]
+          nu: ["mqtt://127.0.0.1/MetaSejongChungmuHallSensor1Data?ct=json"] }]
         cnt: [{ rn: data, mni: 3600 }]
       - rn: Sensor2
         lbl: ["type=sensor","region=Chungmu","sid=C-S2","x=20.0","y=10.0","z=0.0","adjx=20.0","adjy=10.5","adjz=0.0"]
         subs: [{ rn: C-S1-sub, enc: { net: [3] }, nct: 2,
-          nu: ["mqtt://203.250.148.120/Meta_Sejong_Chungmu_hall_Sensor2_data?ct=json"] }]
+          nu: ["mqtt://127.0.0.1/MetaSejongChungmuHallSensor2Data?ct=json"] }]
         cnt: [{ rn: data, mni: 3600 }]
       - rn: Sensor3
         lbl: ["type=sensor","region=Chungmu","sid=C-S3","x=30.0","y=10.0","z=0.0","adjx=30.0","adjy=10.5","adjz=0.0"]
         subs: [{ rn: C-S3-sub, enc: { net: [3] }, nct: 2,
-          nu: ["mqtt://203.250.148.120/Meta-Sejong-Chungmu-hall-Sensor3-data?ct=json"] }]
+          nu: ["mqtt://127.0.0.1/MetaSejongChungmuHallSensor3Data?ct=json"] }]
         cnt: [{ rn: data, mni: 3600 }]
 
   - rn: Robot1
@@ -32,9 +32,9 @@ tree:
         lbl: ["type=cam","robot=Rb1","cid=Rb1-C1"]
         cnt: [{ rn: data, mni: 3600,
           subs: [{ rn: Rb1-C1-sub, enc: { net: [3] }, nct: 2,
-            nu: ["mqtt://203.250.148.120/Meta-Sejong-Robot1-Cam1/data?ct=json"] }] }]
+            nu: ["mqtt://127.0.0.1/MetaSejongRobot1Cam1Data?ct=json"] }] }]
       - rn: Cam2
         lbl: ["type=cam","robot=Rb1","cid=Rb1-C2"]
         cnt: [{ rn: data, mni: 3600,
           subs: [{ rn: Rb1-C2-sub, enc: { net: [3] }, nct: 2,
-            nu: ["mqtt://203.250.148.120/Meta-Sejong-Robot1-Cam2/data?ct=json"] }] }]
+            nu: ["mqtt://127.0.0.1/MetaSejongRobot1Cam2Data?ct=json"] }] }]
